@@ -1,4 +1,4 @@
-name = "worker-typescript-template"
+name = "currency-exchange-notifier-cf"
 type = "javascript"
 zone_id = ""
 account_id = ""
@@ -9,3 +9,6 @@ workers_dev = true
 command = "npm install && npm run build"
 [build.upload]
 format = "service-worker"
+
+[triggers]
+crons = ["0 8,10,19 * * mon-fri"]
