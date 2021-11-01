@@ -1,5 +1,11 @@
-import { handleRequest } from './handler'
+import { handleRequest, handleSchedule } from './handler'
 
 addEventListener('fetch', (event) => {
-  event.respondWith(handleRequest(event.request))
+  event.respondWith(handleRequest())
+})
+
+addEventListener('scheduled', event => {
+  event.waitUntil(
+    handleSchedule(event.scheduledTime)
+  )
 })

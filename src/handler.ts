@@ -9,9 +9,15 @@ declare global {
   const SENDGRID_EMAIL: string
 }
 
-export async function handleRequest(request: Request): Promise<Response> {
+async function handleRequest(): Promise<Response> {
   await notifyByMail()
   return new Response(`email sent - ${new Date()}`)
+}
+
+async function handleSchedule(scheduledDate: any): Promise<void> {
+  await notifyByMail()
+  console.log("scheduledDate", scheduledDate)
+  console.log(`email sent - ${new Date()}`)
 }
 
 const notifyByMail = async () => {
@@ -23,7 +29,7 @@ const notifyByMail = async () => {
 const createEmail = (exchangeRatesPayload: any): any => {
   const fromEmail = SENDGRID_EMAIL
   const toEmail = TO_EMAIL
-  const recipients = [{ email: toEmail } ]
+  const recipients = [{ email: toEmail }]
   const sender = { email: fromEmail, name: 'Currency Notifier' }
 
   const { date, timestamp, rates } = exchangeRatesPayload
@@ -49,25 +55,28 @@ const createEmail = (exchangeRatesPayload: any): any => {
   `
 
   return {
-    personalizations: [{ to: recipients, subject: subject}],
+    personalizations: [{ to: recipients, subject: subject }],
     from: sender,
-    content: [{ type: 'text/html', value: htmlBody }]
+    content: [{ type: 'text/html', value: htmlBody }],
   }
 }
 
 const fetchExchangeRates = async () => {
-  const url: string = `http://data.fixer.io/api/latest?access_key=${FIXER_API}&symbols=USD,GBP`
+  const url = `http://data.fixer.io/api/latest?access_key=${FIXER_API}&symbols=USD,GBP`
   const response = await fetch(url)
   return response.json()
 }
 
 const sendEmail = (email: any) => {
-  const url = 'https://api.sendgrid.com/v3/mail/send'  
+  const url = 'https://api.sendgrid.com/v3/mail/send'
   return fetch(url, {
-    method: "POST", headers: {
-    Authorization: `Bearer ${SENDGRID_API_TOKEN}`,
-    'Content-Type': 'application/json',
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${SENDGRID_API_TOKEN}`,
+      'Content-Type': 'application/json',
     },
-    body: JSON.stringify(email)
+    body: JSON.stringify(email),
   })
 }
+
+export { handleSchedule, handleRequest }
