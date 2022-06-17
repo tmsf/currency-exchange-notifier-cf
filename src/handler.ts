@@ -7,6 +7,8 @@ declare global {
   const SENDGRID_API_TOKEN: string
   const TO_EMAIL: string
   const SENDGRID_EMAIL: string
+  const TELEGRAM_TOKEN: string
+  const TELEGRAM_USER_ID: string
 }
 
 async function handleRequest(): Promise<Response> {
@@ -22,7 +24,8 @@ async function handleSchedule(scheduledDate: any): Promise<void> {
 
 const notifyByMail = async () => {
   const exchangeRates = await fetchExchangeRates()
-  const emailPayload: any = createEmail(exchangeRates)
+  const [emailPayload, telegramPayload]: any = createEmail(exchangeRates)
+  const res = await sendToTelegram(telegramPayload)
   await sendEmail(emailPayload)
 }
 
@@ -53,12 +56,23 @@ const createEmail = (exchangeRatesPayload: any): any => {
   <div>1000 GBP = ${gbpEur.toFixed(2)} EUR </div>\
   <div>1000 EUR = ${eurGbp.toFixed(2)} GBP </div>\
   `
+  const smsBody = `
+  Exchange rates: \n\
+  \n\
+  USD\n\
+  1000 USD = ${eurUsd.toFixed(2)} EUR \n\
+  1000 EUR = ${UsdEur.toFixed(2)} USD \n\
+  \n
+  GBP \n\
+  1000 GBP = ${gbpEur.toFixed(2)} EUR \n\
+  1000 EUR = ${eurGbp.toFixed(2)} GBP \n\
+  `
 
-  return {
+  return [{
     personalizations: [{ to: recipients, subject: subject }],
     from: sender,
     content: [{ type: 'text/html', value: htmlBody }],
-  }
+  }, smsBody]
 }
 
 const fetchExchangeRates = async () => {
@@ -67,6 +81,22 @@ const fetchExchangeRates = async () => {
   return response.json()
 }
 
+const sendToTelegram = async (message: string) => {
+  const data ={
+    "chat_id":`${TELEGRAM_USER_ID}`,
+    "text": message,
+    "disable_notification": true
+  }
+  const url = `https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(data)
+  })
+  return response.json()
+}
 const sendEmail = (email: any) => {
   const url = 'https://api.sendgrid.com/v3/mail/send'
   return fetch(url, {
